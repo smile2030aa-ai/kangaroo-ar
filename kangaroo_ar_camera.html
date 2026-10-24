@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>الكنغران | تحدي القسمة بالواقع المعزز</title>
+<style>
+:root{font-family:Tahoma,Arial,sans-serif;color:#183c4b}*{box-sizing:border-box}body{margin:0;background:linear-gradient(155deg,#fff8e9,#e9f7f5)}main{max-width:720px;margin:auto;padding:20px;text-align:center}h1{font-size:clamp(23px,5vw,35px)}p{line-height:1.8}.weights{font-weight:bold;font-size:19px}.primary{background:#087d83;color:white;border:0;border-radius:14px;padding:16px 20px;font-weight:bold;font-size:18px;cursor:pointer;min-height:54px}.primary:disabled{opacity:.55}.note{font-size:14px;color:#526b74}.quiz{background:#fff;border-radius:20px;padding:16px;margin:16px 0;box-shadow:0 6px 24px #0001}.choices{display:grid;gap:10px}.choice{background:#eef9f7;color:#16424a;border:2px solid #b6e4df;border-radius:13px;padding:12px;font-size:17px;font-weight:bold;cursor:pointer}.choice:active{background:#d3f3e8}.feedback{min-height:32px;font-weight:bold;margin-top:12px}.preview{width:100%;height:290px;border:0;border-radius:18px;background:#eef4f5}#ar-overlay{display:none;position:fixed;inset:0;pointer-events:none;z-index:10;direction:rtl}#ar-overlay.active{display:block}.overlay-top{position:absolute;top:env(safe-area-inset-top,0px);left:0;right:0;padding:12px;background:#fffef3ed;pointer-events:auto}.overlay-top h2{font-size:17px;margin:0 0 6px}.overlay-bottom{position:absolute;bottom:env(safe-area-inset-bottom,0px);left:0;right:0;padding:12px;background:#fffef3f2;pointer-events:auto}.overlay-bottom .choices{grid-template-columns:repeat(3,1fr);gap:5px}.overlay-bottom .choice{font-size:13px;padding:10px 4px}.small{font-size:13px}.close{border:1px solid #aaa;border-radius:9px;background:white;padding:8px 12px;float:left}.status{font-size:14px;font-weight:bold}#ar-overlay button{touch-action:manipulation}canvas{touch-action:none}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}</script>
+</head>
+<body>
+<main><h1>🦘 الكنغر الكبير والكنغر الصغير 🦘</h1><p class="weights">كتلة الكبير: ٦٥ كجم | كتلة الصغير: ٣ كجم</p><p>شاهدي الكنغرين على الطاولة وأجيبي عن السؤال داخل مشهد الكاميرا.</p><button id="start" class="primary" disabled>جارٍ تجهيز الواقع المعزز…</button><p id="availability" class="note">يُفضّل فتح الرابط في Chrome على جوال سامسونج.</p><div class="quiz"><h2>⭐ تحدي بطلات الرياضيات</h2><p>كم مجموعة كاملة من ٣ كجم في ٦٥ كجم؟</p><div class="choices" id="page-choices"></div><p class="feedback" id="page-feedback" aria-live="polite"></p></div><p class="note">إذا لم يدعم المتصفح عرض الأسئلة داخل الكاميرا، سيبقى الموقع القديم متاحًا لعرض الكنغرين على الطاولة.</p><a href="./" class="note">فتح الموقع السابق</a></main>
+<div id="ar-overlay"><div class="overlay-top"><button id="end" class="close">إنهاء</button><h2>🦘 تحدي القسمة بالواقع المعزز</h2><div class="small">٦٥ كجم ÷ ٣ كجم</div><div id="placement" class="status">وجّهي الكاميرا إلى الطاولة، ثم المسِي الشاشة لوضع الكنغرين.</div></div><div class="overlay-bottom"><div class="small">كم مجموعة كاملة من ٣ كجم في ٦٥ كجم؟</div><div class="choices" id="ar-choices"></div><div class="feedback" id="ar-feedback" aria-live="polite"></div></div></div>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+const start=document.querySelector('#start'), availability=document.querySelector('#availability'), overlay=document.querySelector('#ar-overlay');
+const answers=[['٢٠ مجموعة',false],['٢١ مجموعة ويتبقى ٢ كجم',true],['٢٢ مجموعة',false]];
+for(const mode of ['page','ar']){const target=document.getElementById(mode+'-choices');for(const [label,correct] of answers){const b=document.createElement('button');b.className='choice';b.textContent=label;b.onclick=()=>{document.getElementById(mode+'-feedback').textContent=correct?'🌟 أحسنتِ يا بطلة الرياضيات! إجابة صحيحة.':'💪 محاولة جميلة! فكّري في الباقي وجربي مرة أخرى.'};target.append(b)}}
+let renderer,scene,camera,group,reticle,session,hitTestSource,referenceSpace,viewerSpace,placed=false;
+const loader=new GLTFLoader();let modelPromise=loader.loadAsync('./model.glb');
+const supported=!!(navigator.xr && window.isSecureContext);
+if(!supported){availability.textContent='هذا المتصفح لا يدعم WebXR. افتحي الرابط على Chrome في جوال سامسونج.';start.textContent='الواقع المعزز غير متاح هنا'}
+else navigator.xr.isSessionSupported('immersive-ar').then(ok=>{start.disabled=!ok;start.textContent=ok?'📷 افتحي الكاميرا والسؤال معًا':'عرض الأسئلة داخل الكاميرا غير مدعوم';availability.textContent=ok?'اضغطي الزر ثم وجّهي الكاميرا نحو سطح الطاولة.':'قد لا يدعم إصدار المتصفح أو الجهاز هذا النوع من الواقع المعزز.'}).catch(()=>{start.textContent='تعذّر التحقق من دعم الكاميرا'});
+start.onclick=async()=>{start.disabled=true;start.textContent='جارٍ تشغيل الكاميرا…';try{
+ const gltf=await modelPromise;
+ scene=new THREE.Scene();camera=new THREE.PerspectiveCamera();group=new THREE.Group();group.visible=false;scene.add(group);
+ const model=gltf.scene.clone(true);const bounds=new THREE.Box3().setFromObject(model);const size=bounds.getSize(new THREE.Vector3());const center=bounds.getCenter(new THREE.Vector3());const maxDim=Math.max(size.x,size.y,size.z);model.scale.setScalar(0.65/maxDim);model.position.set(-center.x*model.scale.x,-bounds.min.y*model.scale.y,-center.z*model.scale.z);group.add(model);
+ scene.add(new THREE.HemisphereLight(0xffffff,0x777777,2.1));const sun=new THREE.DirectionalLight(0xffffff,2);sun.position.set(2,5,3);scene.add(sun);
+ reticle=new THREE.Mesh(new THREE.RingGeometry(.07,.09,32).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0x12ad9b}));reticle.matrixAutoUpdate=false;reticle.visible=false;scene.add(reticle);
+ renderer=new THREE.WebGLRenderer({alpha:true,antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.xr.enabled=true;renderer.setSize(innerWidth,innerHeight);renderer.domElement.style.position='fixed';renderer.domElement.style.inset='0';renderer.domElement.style.zIndex='9';document.body.append(renderer.domElement);
+ session=await navigator.xr.requestSession('immersive-ar',{requiredFeatures:['hit-test','dom-overlay'],domOverlay:{root:overlay},optionalFeatures:['local-floor']});
+ overlay.classList.add('active');await renderer.xr.setSession(session);referenceSpace=await session.requestReferenceSpace('local');viewerSpace=await session.requestReferenceSpace('viewer');hitTestSource=await session.requestHitTestSource({space:viewerSpace});
+ session.addEventListener('select',()=>{if(!placed&&reticle.visible){group.position.setFromMatrixPosition(reticle.matrix);group.visible=true;placed=true;reticle.visible=false;document.getElementById('placement').textContent='تم وضع الكنغرين! اختاري إجابتكِ أسفل الشاشة.'}});
+ session.addEventListener('end',cleanup,{once:true});renderer.setAnimationLoop((time,frame)=>{if(frame&&!placed){const hits=frame.getHitTestResults(hitTestSource);if(hits.length){const pose=hits[0].getPose(referenceSpace);reticle.visible=true;reticle.matrix.fromArray(pose.transform.matrix)}else reticle.visible=false}renderer.render(scene,camera)});
+ }catch(e){console.error(e);availability.textContent='تعذّر تشغيل العرض داخل الكاميرا: '+(e?.message||'قد لا يدعم الجهاز DOM Overlay أو Hit Test.');cleanup()}finally{start.disabled=false;start.textContent='📷 افتحي الكاميرا والسؤال معًا'}};
+document.getElementById('end').onclick=()=>session?.end();
+function cleanup(){overlay.classList.remove('active');if(hitTestSource){hitTestSource.cancel();hitTestSource=null}if(renderer){renderer.setAnimationLoop(null);renderer.domElement.remove();renderer.dispose();renderer=null}session=null;placed=false}
+</script></body></html>
